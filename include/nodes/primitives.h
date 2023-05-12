@@ -3,7 +3,7 @@
 #include "node.h"
 
 #include <fmt/core.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #define NODE_TYPE_CUBE "Cube"
 
@@ -57,46 +57,8 @@ public:
 
     void uiEditor();
 
-    void setData(void *data)
-    {
-        float *floatData = (float *)data;
-        r = floatData[0];
-        g = floatData[1];
-        b = floatData[2];
-    }
-
-    void *toData(int *size)
-    {
-        int dataSize = sizeof(float) * 3;
-        float *data = (float *)malloc(dataSize);
-        data[0] = r;
-        data[1] = g;
-        data[2] = b;
-
-        if (size)
-        {
-            *size = dataSize;
-        }
-
-        return data;
-    }
-
-    void setJson(nlohmann::json &json)
-    {
-        r = json["r"].get<float>();
-        g = json["g"].get<float>();
-        b = json["b"].get<float>();
-    }
-
-    nlohmann::json toJson()
-    {
-        nlohmann::json result;
-
-        result["type"] = mName;
-        result["r"] = r;
-        result["g"] = g;
-        result["b"] = b;
-
-        return result;
-    }
+    void setData(void *data);
+    void *toData(int *size);
+    void setJson(nlohmann::json &json);
+    nlohmann::json toJson();
 };

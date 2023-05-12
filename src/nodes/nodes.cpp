@@ -3,31 +3,28 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-#define COMPARE_CONST_CHAR(a, b) (((void *)a) == ((void *)b))
-#define COMPARE_STD_STRING(a, b) (!strcmp(a, b))
-
-#define CONSTRUCT_NODE(type, compare, data)         \
-    if (compare(type, NODE_TYPE_ROTATE))            \
+#define CONSTRUCT_NODE(type, data)                  \
+    if (!strcmp(type, NODE_TYPE_ROTATE))            \
     {                                               \
         return new RotateNode(data);                \
     }                                               \
-    else if (compare(type, NODE_TYPE_SCALE))        \
+    else if (!strcmp(type, NODE_TYPE_SCALE))        \
     {                                               \
         return new ScaleNode(data);                 \
     }                                               \
-    else if (compare(type, NODE_TYPE_TRANSLATE))    \
+    else if (!strcmp(type, NODE_TYPE_TRANSLATE))    \
     {                                               \
         return new TranslateNode(data);             \
     }                                               \
-    else if (compare(type, NODE_TYPE_LIST))         \
+    else if (!strcmp(type, NODE_TYPE_LIST))         \
     {                                               \
         return new ListNode(data);                  \
     }                                               \
-    else if (compare(type, NODE_TYPE_MATRIX_FRAME)) \
+    else if (!strcmp(type, NODE_TYPE_MATRIX_FRAME)) \
     {                                               \
         return new MatrixFrameNode(data);           \
     }                                               \
-    else if (compare(type, NODE_TYPE_CUBE))         \
+    else if (!strcmp(type, NODE_TYPE_CUBE))         \
     {                                               \
         return new CubeNode(data);                  \
     }                                               \
@@ -39,7 +36,7 @@
 
 Node *nodeFromData(const char *type, void *data)
 {
-    CONSTRUCT_NODE(type, COMPARE_CONST_CHAR, data);
+    CONSTRUCT_NODE(type, data);
 }
 
 Node *nodeFromJson(nlohmann::json &data)
@@ -57,5 +54,5 @@ Node *nodeFromJson(nlohmann::json &data)
 
     std::string typeName = data["type"].get<std::string>();
 
-    CONSTRUCT_NODE(typeName.c_str(), COMPARE_STD_STRING, data)
+    CONSTRUCT_NODE(typeName.c_str(), data)
 }

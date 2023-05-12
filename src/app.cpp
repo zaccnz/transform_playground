@@ -9,6 +9,14 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#ifdef __APPLE__
+#define HOTKEY_LEFT KEY_LEFT_SUPER
+#define HOTKEY_RIGHT KEY_RIGHT_SUPER
+#else
+#define HOTKEY_LEFT KEY_LEFT_CONTROL
+#define HOTKEY_RIGHT KEY_RIGHT_CONTROL
+#endif
+
 App *app = nullptr;
 
 App::App()
@@ -24,21 +32,7 @@ App::App()
     SetTargetFPS(60);
 
     UI::init();
-
-    mSceneRoot = new MatrixFrameNode();
-    MatrixFrameNode *frame = new MatrixFrameNode();
-    frame->pushChild(new RotateNode(45, 1, 0, 0));
-    frame->pushChild(new TranslateNode(2, 0, 0));
-    mSceneRoot->pushChild(new ScaleNode(0.5, 2, 1));
-    mSceneRoot->pushChild(frame);
-    mSceneRoot->pushChild(new CubeNode(1.0, 0.5, 1.0));
-    frame->pushChild(new CubeNode(1.0, 1.0, 1.0));
-
-    nlohmann::json json = mSceneRoot->toJson();
-
-    std::cout << std::setw(4) << json << std::endl;
-
-    mSceneRoot->setJson(json);
+    mScene = new Scene();
 
     mCamera.position = (Vector3){5.0f, 5.0f, 5.0f};
     mCamera.target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -53,8 +47,25 @@ App::App()
 
 App::~App()
 {
+    freeClipboard();
+    delete mScene;
     UI::deinit();
     CloseWindow();
+}
+
+void App::freeClipboard()
+{
+    if (!mClipboard)
+    {
+        return;
+    }
+
+    for (int i = 0; i < mClipboardCount; i++)
+    {
+        free(mClipboard[i]);
+    }
+    free(mClipboard);
+    mClipboard = nullptr;
 }
 
 void App::render()
@@ -63,8 +74,11 @@ void App::render()
     BeginDrawing();
     ClearBackground(DARKGRAY);
     BeginMode3D(mCamera);
-    mSceneRoot->apply();
-    DrawGrid(10, 1.0f);
+    mScene->render();
+    if (mGrid)
+    {
+        DrawGrid(10, 1.0f);
+    }
     EndMode3D();
 
     UI::render();
@@ -74,8 +88,113 @@ void App::render()
 
 bool App::update()
 {
+    mScene->update();
+
+    bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
+
+    if (isHotkeyDown && IsKeyPressed(KEY_N))
+    {
+        resetScene();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_O))
+    {
+        openFile();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_S))
+    {
+        saveFile();
+    }
+
+    if (isHotkeyDown && IsKeyPressed(KEY_Z))
+    {
+        mScene->undo();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_Y))
+    {
+        mScene->redo();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_X))
+    {
+        cut();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_C))
+    {
+        copy();
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_V))
+    {
+        paste();
+    }
+
+    if (isHotkeyDown && IsKeyPressed(KEY_ONE))
+    {
+        UI::bSceneTreeOpen = true;
+    }
+    if (isHotkeyDown && IsKeyPressed(KEY_TWO))
+    {
+        UI::bCameraOpen = true;
+    }
 
     return !WindowShouldClose() && mRunning;
+}
+
+void App::cut()
+{
+    if (!*mSelectedNodes)
+    {
+        return;
+    }
+    freeClipboard();
+}
+
+void App::copy()
+{
+    if (!*mSelectedNodes)
+    {
+        return;
+    }
+    freeClipboard();
+}
+
+void App::paste()
+{
+}
+
+void App::promptUnsavedChanges(AfterUnsavedChanges after)
+{
+    mAfterUnsavedChanges = after;
+    // UI::mPromptUnsavedChanges = true
+    // UI::mPromptUnsavedChangesString = ""
+}
+
+void App::continueUnsavedChanges()
+{
+    switch (mAfterUnsavedChanges)
+    {
+    case DO_LOAD_FILE:
+    {
+        openFile();
+        break;
+    }
+    case DO_QUIT:
+    {
+        quit();
+        break;
+    }
+    default:
+    {
+        printf("invalid unsaved change action %d\n", mAfterUnsavedChanges);
+        break;
+    }
+    }
+}
+
+void App::openFile()
+{
+}
+
+void App::saveFile()
+{
 }
 
 void App::cameraPos(float *x, float *y, float *z)
@@ -84,6 +203,84 @@ void App::cameraPos(float *x, float *y, float *z)
     *x = pos.x;
     *y = pos.y;
     *z = pos.z;
+}
+
+void App::resetScene()
+{
+    delete mScene;
+    mScene = new Scene();
+}
+
+void App::selectNode(Node *node)
+{
+    bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
+
+    if (isHotkeyDown)
+    {
+        int i = 0;
+        while (mSelectedNodes[i] && i < MAX_SELECTED_NODES - 1)
+        {
+            i++;
+        }
+        if (i == MAX_SELECTED_NODES - 1)
+        {
+            return;
+        }
+        mSelectedNodes[i] = node;
+        mSelectedNodes[i + 1] = nullptr;
+    }
+    else
+    {
+        mSelectedNodes[0] = node;
+        mSelectedNodes[1] = nullptr;
+    }
+}
+
+void App::deselectNode(Node *node)
+{
+    if (node)
+    {
+        // if we are not holding control or command, we want to change the
+        // selection to be this node.  otherwise, deselect it
+        bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
+        if (!isHotkeyDown)
+        {
+            mSelectedNodes[0] = node;
+            mSelectedNodes[1] = nullptr;
+            return;
+        }
+        if (!isNodeSelected(node))
+        {
+            return;
+        }
+        int i;
+        for (i = 0; mSelectedNodes[i] != node; i++)
+        {
+        }
+        while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+        {
+            mSelectedNodes[i] = mSelectedNodes[i + 1];
+            i++;
+        }
+    }
+    else
+    {
+        mSelectedNodes[0] = nullptr;
+    }
+}
+
+bool App::isNodeSelected(Node *node)
+{
+    int i = 0;
+    while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+    {
+        if (mSelectedNodes[i] == node)
+        {
+            return true;
+        }
+        i++;
+    }
+    return false;
 }
 
 #ifdef __EMSCRIPTEN__

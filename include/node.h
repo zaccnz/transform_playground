@@ -14,6 +14,8 @@ protected:
     Node(const char *name) : mName(name) {}
 
 public:
+    virtual ~Node() {}
+
     // Virtual node functions
     virtual void apply() = 0;
     virtual std::string getLabel() = 0;

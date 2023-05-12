@@ -9,10 +9,13 @@
 
 #include "nodes/nodes.h"
 
+#include <vector>
+#include <raylib.h>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 
 #define MAX_ACTIONS 2048
-#define INDEX_FIRST 1
+#define NODE_ID_FIRST 1
 
 enum ActionType
 {
@@ -28,23 +31,25 @@ struct Action
 {
     ActionType type;
     // all actions
-    int node_id;
-    // create
-    const char *type;
+    int nodeId;
+    // delete
+    int *childNodeIds;
+    // create and delete
+    const char *nodeType;
     // create and edit
     void *data;
-    // edit
-    void *data_was;
+    // edit and delete
+    void *oldData;
     // create, delete, move
-    int parent_id;
-    int node_index;
+    int parentId;
+    int nodeIndex;
     // move
-    int new_parent_id;
-    int new_node_index;
-    // for chaining actions together (like pasting 3 nodes)
+    int newParentId;
+    int newNodeIndex;
+    // for chaining actions together (e.g., pasting 3 nodes)
     Action *next;
 
-    void freeAction(Action *action);
+    static void freeAction(Action *action);
 };
 
 class Scene
@@ -52,34 +57,52 @@ class Scene
 private:
     Action mActions[MAX_ACTIONS];
     ListNode mSceneRoot;
+    Camera mCamera = {0};
     std::unordered_map<int, Node *> mIds;
     std::unordered_map<Node *, int> mIdResolver;
-    int mNextIndex;
-    int mActionPointer;
-    int mActionCount;
+    int mNextId = NODE_ID_FIRST;
+    int mActionPointer = 0;
+    int mActionCount = 0;
+    int mActionChangePointer = 0;
+    bool mActionChanges = false;
+    int mActionPointerSaved = 0;
+
+    void tempRegisterNode(Node *node, Node *parent);
 
     bool pushAction(Action &action);
+    void createNodeInternal(const char *type, void *data, int nodeId, int parentId, int index, int *childNodeIds);
+    void deleteNodeInternal(int nodeId);
+    void moveNodeInternal(int nodeId, int newParentId, int newParentIndex);
+
+    int registerChildren(ListNode *node, int *childNodeIds);
+    void unregisterChildren(ListNode *node);
+    void collectChildNodeIds(ListNode *node, std::vector<int> &store);
+
+    void undoAction(Action *action);
+    void redoAction(Action *action);
 
 public:
     Scene();
     ~Scene();
 
-    void createNode();
-    void deleteNode(Node *target);
-    void editNode(Node *target, void *newData);
-    void moveNode(Node *target, ListNode *newParent, int index);
-
     void undo();
-    void redo();
+    void redo(bool changePointer = false);
+
+    void render();
+    void update();
+
+    void createNode(const char *type, void *data, Node *parent, int index);
+    void deleteNode(Node *target);
+    void editNode(Node *target, void *data, void *newData);
+    void moveNode(Node *target, ListNode *newParent, int index);
 
     bool canUndo();
     bool canRedo();
 
-    bool load();
-    bool save();
+    bool load(char *path);
+    bool save(char *path);
 
-    // TODO: figure out params
-    void copyNode();
-    void copyNodes();
-    void pasteNodes();
+    bool areChangesUnsaved();
+
+    ListNode *getSceneRoot() { return &mSceneRoot; }
 };

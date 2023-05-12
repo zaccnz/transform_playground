@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <rlgl.h>
+#include <nlohmann/json.hpp>
 
 #include <iostream>
 
@@ -32,4 +33,47 @@ void CubeNode::apply()
 void CubeNode::uiEditor()
 {
     PrimitiveNode::uiEditor();
+}
+
+void CubeNode::setData(void *data)
+{
+    float *floatData = (float *)data;
+    r = floatData[0];
+    g = floatData[1];
+    b = floatData[2];
+}
+
+void *CubeNode::toData(int *size)
+{
+    int dataSize = sizeof(float) * 3;
+    float *data = (float *)malloc(dataSize);
+    data[0] = r;
+    data[1] = g;
+    data[2] = b;
+
+    if (size)
+    {
+        *size = dataSize;
+    }
+
+    return data;
+}
+
+void CubeNode::setJson(nlohmann::json &json)
+{
+    r = json["r"].get<float>();
+    g = json["g"].get<float>();
+    b = json["b"].get<float>();
+}
+
+nlohmann::json CubeNode::toJson()
+{
+    nlohmann::json result;
+
+    result["type"] = mName;
+    result["r"] = r;
+    result["g"] = g;
+    result["b"] = b;
+
+    return result;
 }

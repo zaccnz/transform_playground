@@ -18,23 +18,36 @@ void UI::menubar()
         {
             if (ImGui::MenuItem("New Scene", SHORTCUT_KEY "+N"))
             {
-                // NOTE: should check for changes
-                // (if scene action ptr > 0)
+                app->resetScene();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Load scene", SHORTCUT_KEY "+O"))
             {
-                // NOTE: should check for changes
-                // (if scene action ptr > 0)
+                if (app->getScene()->areChangesUnsaved())
+                {
+                    app->promptUnsavedChanges(DO_LOAD_FILE);
+                }
+                else
+                {
+                    app->openFile();
+                }
             }
             if (ImGui::MenuItem("Save scene", SHORTCUT_KEY "+S"))
             {
+                app->saveFile();
             }
 #ifndef __EMSCRIPTEN__
             ImGui::Separator();
             if (ImGui::MenuItem("Exit"))
             {
-                app->quit();
+                if (app->getScene()->areChangesUnsaved())
+                {
+                    app->promptUnsavedChanges(DO_QUIT);
+                }
+                else
+                {
+                    app->quit();
+                }
             }
 #endif
             ImGui::EndMenu();
@@ -43,20 +56,24 @@ void UI::menubar()
         {
             if (ImGui::MenuItem("Undo", SHORTCUT_KEY "+Z"))
             {
+                app->getScene()->undo();
             }
             if (ImGui::MenuItem("Redo", SHORTCUT_KEY "+Y"))
             {
+                app->getScene()->redo();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Cut", SHORTCUT_KEY "+X"))
             {
-                printf("cut shortcut\n");
+                app->cut();
             }
             if (ImGui::MenuItem("Copy", SHORTCUT_KEY "+C"))
             {
+                app->copy();
             }
             if (ImGui::MenuItem("Paste", SHORTCUT_KEY "+V"))
             {
+                app->paste();
             }
             ImGui::EndMenu();
         }
@@ -94,19 +111,19 @@ void UI::menubar()
             ImGui::Separator();
             ImGui::MenuItem("Editors", (const char *)NULL, (bool *)NULL, (bool)false);
 
-            if (ImGui::MenuItem("Camera"))
-            {
-                bCameraOpen = true;
-            }
-            if (ImGui::MenuItem("Scene Tree"))
+            if (ImGui::MenuItem("Scene Tree", SHORTCUT_KEY "+1"))
             {
                 bSceneTreeOpen = true;
+            }
+            if (ImGui::MenuItem("Camera", SHORTCUT_KEY "+2"))
+            {
+                bCameraOpen = true;
             }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Debug"))
         {
-            ImGui::MenuItem("Show grid", NULL, (bool *)NULL);
+            ImGui::MenuItem("Show grid", NULL, app->getGridPtr());
             ImGui::MenuItem("Show position", NULL, &bDebugPosition);
             ImGui::MenuItem("Show fps", NULL, &bDebugFps);
             ImGui::EndMenu();

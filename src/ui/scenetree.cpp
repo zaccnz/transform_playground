@@ -1,6 +1,7 @@
 #include "ui.h"
 
 #include "app.h"
+#include "scene.h"
 #include "node.h"
 #include "nodes/nodes.h"
 
@@ -46,7 +47,7 @@ namespace UI
             ImGui::Separator();
             if (ImGui::MenuItem("Delete"))
             {
-                // not implemented
+                app->getScene()->deleteNode(node);
             }
             ImGui::EndPopup();
         }
@@ -112,14 +113,7 @@ namespace UI
                     index--;
                 }
 
-                if (dropPayload->getParent())
-                {
-                    // remove this node from any existing parents
-                    ListNode *listNode = (ListNode *)dropPayload->getParent();
-                    int index = listNode->indexOfChild(dropPayload);
-                    listNode->removeChild(index);
-                }
-                newParent->insertChild(index, dropPayload);
+                app->getScene()->moveNode(dropPayload, newParent, index);
             }
             ImGui::EndDragDropTarget();
         }
@@ -142,15 +136,32 @@ namespace UI
         }
         ImGui::PopID();
         ImGui::SameLine();
+        bool selected = app->isNodeSelected(node);
+        if (selected)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{1.0, 1.0, 0.5, 1.0});
+        }
         bool open = ImGui::TreeNodeEx(node, flags, "%s", node->getLabel().c_str());
+        if (selected)
+        {
+            ImGui::PopStyleColor(1);
+        }
 
         ImGui::PushID(node);
         sceneTreeNodeContextMenu(node);
         ImGui::PopID();
 
-        if (ImGui::IsItemClicked() && node->isLeaf())
+        if (ImGui::IsItemClicked())
         {
-            // do edit option
+            app->selectNode(node);
+        }
+
+        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+        {
+            // even if holding down control, we dont want to select multiple
+            app->deselectNode();
+            app->selectNode(node);
+            printf("hello world\n");
         }
 
         if (!node->isLeaf() && sceneTreeAllowDrop(node))
@@ -162,14 +173,8 @@ namespace UI
                     IM_ASSERT(payload->DataSize == sizeof(Node *));
                     Node *dropPayload = *(Node **)payload->Data;
 
-                    if (dropPayload->getParent())
-                    {
-                        ListNode *listNode = (ListNode *)dropPayload->getParent();
-                        int index = listNode->indexOfChild(dropPayload);
-                        listNode->removeChild(index);
-                    }
                     ListNode *thisNode = (ListNode *)node;
-                    thisNode->insertChild(thisNode->getChildCount(), dropPayload);
+                    app->getScene()->moveNode(dropPayload, thisNode, thisNode->getChildCount());
                 }
                 ImGui::EndDragDropTarget();
             }
@@ -193,10 +198,9 @@ namespace UI
                     ImGui::Dummy(ImVec2{2.0f, 1.0f});
                     sceneTreeCustomTarget((ListNode *)node, i, i == 0, false);
                     sceneTreeNode(list->getChild(i));
-                    child_count = list->getChildCount();
                 }
                 ImGui::Dummy(ImVec2{2.0f, 2.0f});
-                sceneTreeCustomTarget((ListNode *)node, child_count, child_count == 1, true);
+                sceneTreeCustomTarget((ListNode *)node, child_count, false, true);
             }
             ImGui::TreePop();
         }

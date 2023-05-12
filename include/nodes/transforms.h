@@ -3,7 +3,7 @@
 #include "node.h"
 
 #include <fmt/core.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #define NODE_TYPE_ROTATE "Rotate"
 #define NODE_TYPE_SCALE "Scale"
@@ -16,7 +16,6 @@ private:
 
 public:
     RotateNode(float angle, float x, float y, float z) : Node(NODE_TYPE_ROTATE), angle(angle), x(x), y(y), z(z) {}
-
     RotateNode(const RotateNode &other) : Node(NODE_TYPE_ROTATE)
     {
         angle = other.angle;
@@ -24,12 +23,10 @@ public:
         y = other.y;
         z = other.z;
     }
-
     RotateNode(void *data) : Node(NODE_TYPE_ROTATE)
     {
         setData(data);
     }
-
     RotateNode(nlohmann::json &json) : Node(NODE_TYPE_ROTATE)
     {
         setJson(json);
@@ -45,52 +42,10 @@ public:
     bool editable() { return true; }
     void uiEditor();
 
-    void setData(void *data)
-    {
-        float *floatData = (float *)data;
-        angle = floatData[0];
-        x = floatData[1];
-        y = floatData[2];
-        z = floatData[3];
-    }
-
-    void *toData(int *size)
-    {
-        int dataSize = sizeof(float) * 4;
-        float *data = (float *)malloc(dataSize);
-        data[0] = angle;
-        data[1] = x;
-        data[2] = y;
-        data[3] = z;
-
-        if (size)
-        {
-            *size = dataSize;
-        }
-
-        return data;
-    }
-
-    void setJson(nlohmann::json &json)
-    {
-        angle = json["angle"].get<float>();
-        x = json["x"].get<float>();
-        y = json["y"].get<float>();
-        z = json["z"].get<float>();
-    }
-
-    nlohmann::json toJson()
-    {
-        nlohmann::json result;
-
-        result["type"] = mName;
-        result["angle"] = angle;
-        result["x"] = x;
-        result["y"] = y;
-        result["z"] = z;
-
-        return result;
-    }
+    void setData(void *data);
+    void *toData(int *size);
+    void setJson(nlohmann::json &json);
+    nlohmann::json toJson();
 };
 
 class ScaleNode : public Node
@@ -100,19 +55,16 @@ private:
 
 public:
     ScaleNode(float x, float y, float z) : Node(NODE_TYPE_SCALE), x(x), y(y), z(z) {}
-
     ScaleNode(const ScaleNode &other) : Node(NODE_TYPE_SCALE)
     {
         x = other.x;
         y = other.y;
         z = other.z;
     }
-
     ScaleNode(void *data) : Node(NODE_TYPE_SCALE)
     {
         setData(data);
     }
-
     ScaleNode(nlohmann::json &json) : Node(NODE_TYPE_SCALE)
     {
         setJson(json);
@@ -128,48 +80,10 @@ public:
     bool editable() { return true; }
     void uiEditor();
 
-    void setData(void *data)
-    {
-        float *floatData = (float *)data;
-        x = floatData[0];
-        y = floatData[1];
-        z = floatData[2];
-    }
-
-    void *toData(int *size)
-    {
-        int dataSize = sizeof(float) * 3;
-        float *data = (float *)malloc(dataSize);
-        data[0] = x;
-        data[1] = y;
-        data[2] = z;
-
-        if (size)
-        {
-            *size = dataSize;
-        }
-
-        return data;
-    }
-
-    void setJson(nlohmann::json &json)
-    {
-        x = json["x"].get<float>();
-        y = json["y"].get<float>();
-        z = json["z"].get<float>();
-    }
-
-    nlohmann::json toJson()
-    {
-        nlohmann::json result;
-
-        result["type"] = mName;
-        result["x"] = x;
-        result["y"] = y;
-        result["z"] = z;
-
-        return result;
-    }
+    void setData(void *data);
+    void *toData(int *size);
+    void setJson(nlohmann::json &json);
+    nlohmann::json toJson();
 };
 
 class TranslateNode : public Node
@@ -179,19 +93,16 @@ private:
 
 public:
     TranslateNode(float x, float y, float z) : Node(NODE_TYPE_TRANSLATE), x(x), y(y), z(z) {}
-
     TranslateNode(const TranslateNode &other) : Node(NODE_TYPE_TRANSLATE)
     {
         x = other.x;
         y = other.y;
         z = other.z;
     }
-
     TranslateNode(void *data) : Node(NODE_TYPE_TRANSLATE)
     {
         setData(data);
     }
-
     TranslateNode(nlohmann::json &json) : Node(NODE_TYPE_TRANSLATE)
     {
         setJson(json);
@@ -207,46 +118,8 @@ public:
     bool editable() { return true; }
     void uiEditor();
 
-    void setData(void *data)
-    {
-        float *floatData = (float *)data;
-        x = floatData[0];
-        y = floatData[1];
-        z = floatData[2];
-    }
-
-    void *toData(int *size)
-    {
-        int dataSize = sizeof(float) * 3;
-        float *data = (float *)malloc(dataSize);
-        data[0] = x;
-        data[1] = y;
-        data[2] = z;
-
-        if (size)
-        {
-            *size = dataSize;
-        }
-
-        return data;
-    }
-
-    void setJson(nlohmann::json &json)
-    {
-        x = json["x"].get<float>();
-        y = json["y"].get<float>();
-        z = json["z"].get<float>();
-    }
-
-    nlohmann::json toJson()
-    {
-        nlohmann::json result;
-
-        result["type"] = mName;
-        result["x"] = x;
-        result["y"] = y;
-        result["z"] = z;
-
-        return result;
-    }
+    void setData(void *data);
+    void *toData(int *size);
+    void setJson(nlohmann::json &json);
+    nlohmann::json toJson();
 };
