@@ -11,8 +11,12 @@ namespace UI
     bool bCameraOpen = false;
     bool bDebugFps = true;
     bool bDebugPosition = true;
-    bool bOssOpen = true;
+    bool bEditorOpen = false;
+    bool bOssOpen = false;
+    bool bPromptUnsavedChanges = false;
     bool bSceneTreeOpen = true;
+
+    std::string sPromptUnsavedChanges = "";
 
     void init()
     {
@@ -31,6 +35,8 @@ namespace UI
         menubar();
         debug();
         sceneTree();
+        promptUnsavedChanges();
+        editor();
 
         rlImGuiEnd();
     }
@@ -65,6 +71,30 @@ namespace UI
                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
             ImGui::Text("%.1f fps (%.3f ms)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+    }
+
+    void promptUnsavedChanges()
+    {
+        if (bPromptUnsavedChanges && ImGui::Begin("Confirm", &bPromptUnsavedChanges, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
+        {
+            float width = 300.0, height = 120.0;
+            float pos_x = (GetScreenWidth() - width) / 2.0, pos_y = (GetScreenHeight() - height) / 2.0;
+
+            ImGui::SetWindowSize(ImVec2{width, height}, ImGuiCond_Always);
+            ImGui::SetWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+
+            ImGui::TextWrapped("You have unsaved changes, which will be lost.  Are you sure you would like to %s?", sPromptUnsavedChanges.c_str());
+            if (ImGui::Button("Cancel"))
+            {
+                bPromptUnsavedChanges = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Continue"))
+            {
+                app->continueUnsavedChanges();
+            }
             ImGui::End();
         }
     }

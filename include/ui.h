@@ -1,13 +1,19 @@
 #pragma once
 
+#include <string>
+
 namespace UI
 {
     extern bool bAboutOpen;
     extern bool bCameraOpen;
     extern bool bDebugFps;
     extern bool bDebugPosition;
+    extern bool bEditorOpen;
     extern bool bOssOpen;
+    extern bool bPromptUnsavedChanges;
     extern bool bSceneTreeOpen;
+
+    extern std::string sPromptUnsavedChanges;
 
     void init();
     void deinit();
@@ -15,7 +21,9 @@ namespace UI
     void render();
 
     // UI elements
-    void debug();     // ui.cpp
-    void menubar();   // menubar.cpp
-    void sceneTree(); // scenetree.cpp
+    void debug();                // ui.cpp
+    void promptUnsavedChanges(); // ui.cpp
+    void editor();               // editor.cpp
+    void menubar();              // menubar.cpp
+    void sceneTree();            // scenetree.cpp
 }

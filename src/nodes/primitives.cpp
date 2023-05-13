@@ -1,5 +1,6 @@
 #include <nodes/primitives.h>
 
+#include <imgui.h>
 #include <raylib.h>
 #include <rlgl.h>
 #include <nlohmann/json.hpp>
@@ -18,9 +19,13 @@ Color colorFromFloat(float r, float g, float b)
     return c;
 }
 
-void PrimitiveNode::uiEditor()
+bool PrimitiveNode::uiEditor()
 {
-    // TODO: render colour picker
+    bool changed = false;
+    changed |= ImGui::SliderFloat("Red", &r, 0.0, 1.0, "%.2f");
+    changed |= ImGui::SliderFloat("Green", &g, 0.0, 1.0, "%.2f");
+    changed |= ImGui::SliderFloat("Blue", &b, 0.0, 1.0, "%.2f");
+    return changed;
 }
 
 void CubeNode::apply()
@@ -30,9 +35,9 @@ void CubeNode::apply()
     DrawCube({0, 0, 0}, 1.0f, 1.0f, 1.0f, colorFromFloat(r, g, b));
 }
 
-void CubeNode::uiEditor()
+bool CubeNode::uiEditor()
 {
-    PrimitiveNode::uiEditor();
+    return PrimitiveNode::uiEditor();
 }
 
 void CubeNode::setData(void *data)

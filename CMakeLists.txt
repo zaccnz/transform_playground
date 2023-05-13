@@ -37,6 +37,7 @@ set(sources
     src/nodes/nodes.cpp
     src/nodes/primitives.cpp
     src/nodes/transforms.cpp
+    src/ui/editor.cpp
     src/ui/menubar.cpp
     src/ui/scenetree.cpp
     src/ui/ui.cpp

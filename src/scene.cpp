@@ -1,5 +1,7 @@
 #include "scene.h"
 
+#include "app.h"
+
 #include <raylib.h>
 #include <rlgl.h>
 
@@ -89,7 +91,15 @@ bool Scene::pushAction(Action &action)
 
 void Scene::createNodeInternal(const char *type, void *data, int nodeId, int parentId, int index, int *childNodeIds)
 {
-    Node *node = nodeFromData(type, data);
+    Node *node;
+    if (data)
+    {
+        node = nodeFromData(type, data);
+    }
+    else
+    {
+        node = nodeFromType(type);
+    }
     mIds.insert({nodeId, node});
     mIdResolver.insert({node, nodeId});
 
@@ -192,6 +202,7 @@ void Scene::undoAction(Action *action)
     {
     case ACTION_CREATE_NODE:
     {
+        app->deselectNode();
         deleteNodeInternal(action->nodeId);
         break;
     }
@@ -230,6 +241,7 @@ void Scene::redoAction(Action *action)
     }
     case ACTION_DELETE_NODE:
     {
+        app->deselectNode();
         deleteNodeInternal(action->nodeId);
         break;
     }
@@ -412,5 +424,5 @@ bool Scene::save(char *path)
 
 bool Scene::areChangesUnsaved()
 {
-    return mActionPointerSaved == mActionPointer;
+    return mActionPointerSaved != mActionPointer;
 }

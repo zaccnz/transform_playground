@@ -163,8 +163,25 @@ void App::paste()
 void App::promptUnsavedChanges(AfterUnsavedChanges after)
 {
     mAfterUnsavedChanges = after;
-    // UI::mPromptUnsavedChanges = true
-    // UI::mPromptUnsavedChangesString = ""
+    UI::bPromptUnsavedChanges = true;
+    switch (after)
+    {
+    case DO_LOAD_FILE:
+    {
+        UI::sPromptUnsavedChanges = "load a new scene";
+        break;
+    }
+    case DO_QUIT:
+    {
+        UI::sPromptUnsavedChanges = "quit";
+        break;
+    }
+    default:
+    {
+        printf("invalid unsaved change action %d\n", mAfterUnsavedChanges);
+        break;
+    }
+    }
 }
 
 void App::continueUnsavedChanges()
@@ -241,10 +258,14 @@ void App::deselectNode(Node *node)
     if (node)
     {
         // if we are not holding control or command, we want to change the
-        // selection to be this node.  otherwise, deselect it
+        // selection to be this node (unless we are already selecting it).  otherwise, deselect it
         bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
         if (!isHotkeyDown)
         {
+            if (mSelectedNodes[0] == node)
+            {
+                node = nullptr;
+            }
             mSelectedNodes[0] = node;
             mSelectedNodes[1] = nullptr;
             return;
@@ -281,6 +302,44 @@ bool App::isNodeSelected(Node *node)
         i++;
     }
     return false;
+}
+
+int App::getSelectedNodeCount()
+{
+    int i = 0;
+    while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+    {
+        i++;
+    }
+    return i;
+}
+
+void App::createNode(const char *type)
+{
+    if (!*mSelectedNodes)
+    {
+        ListNode *root = mScene->getSceneRoot();
+        mScene->createNode(type, nullptr, root, root->getChildCount());
+    }
+    else
+    {
+        int i = 0;
+        while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+        {
+            Node *selected = mSelectedNodes[i];
+            if (selected->isLeaf())
+            {
+                ListNode *parent = (ListNode *)selected->getParent();
+                int index = parent->indexOfChild(selected);
+                mScene->createNode(type, nullptr, parent, index + 1);
+            }
+            else
+            {
+                ListNode *selectedList = (ListNode *)selected;
+                mScene->createNode(type, nullptr, selectedList, selectedList->getChildCount());
+            }
+        }
+    }
 }
 
 #ifdef __EMSCRIPTEN__

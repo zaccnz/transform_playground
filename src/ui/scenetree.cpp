@@ -23,24 +23,56 @@ namespace UI
             {
                 if (ImGui::MenuItem("Edit"))
                 {
+                    app->selectNode(node);
+                    bEditorOpen = true;
                     // editedObject = node;
                     // editorOpen = true;
                 }
                 ImGui::Separator();
             }
-            if (ImGui::MenuItem("Insert Above"))
+            if (ImGui::BeginMenu("Insert Above"))
             {
+                const char *type = nodeListUi();
+                if (type)
+                {
+                    ListNode *parent = (ListNode *)node->getParent();
+                    int index = parent->indexOfChild(node);
+                    app->getScene()->createNode(type, nullptr, parent, index);
+                }
+                ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Insert Below"))
+            if (ImGui::BeginMenu("Insert Below"))
             {
+                const char *type = nodeListUi();
+                if (type)
+                {
+                    ListNode *parent = (ListNode *)node->getParent();
+                    int index = parent->indexOfChild(node);
+                    app->getScene()->createNode(type, nullptr, parent, index + 1);
+                }
+                ImGui::EndMenu();
             }
             if (!node->isLeaf())
             {
-                if (ImGui::MenuItem("Insert First Child"))
+                if (ImGui::BeginMenu("Insert First Child"))
                 {
+                    const char *type = nodeListUi();
+                    if (type)
+                    {
+                        ListNode *self = (ListNode *)node;
+                        app->getScene()->createNode(type, nullptr, self, 0);
+                    }
+                    ImGui::EndMenu();
                 }
-                if (ImGui::MenuItem("Insert Last Child"))
+                if (ImGui::BeginMenu("Insert Last Child"))
                 {
+                    const char *type = nodeListUi();
+                    if (type)
+                    {
+                        ListNode *self = (ListNode *)node;
+                        app->getScene()->createNode(type, nullptr, self, self->getChildCount());
+                    }
+                    ImGui::EndMenu();
                 }
             }
 
@@ -53,7 +85,7 @@ namespace UI
         }
     }
 
-    bool sceneTreeAllowDrop(Node *newParent)
+    bool sceneTreeAllowDrop(Node *newParent, int newIndex)
     {
         const ImGuiPayload *payload = ImGui::GetDragDropPayload();
         if (payload == NULL || !payload->IsDataType("SCENE_TREE_DND"))
@@ -69,6 +101,21 @@ namespace UI
         if (newParent->isDescendant(dropPayload))
         {
             return false;
+        }
+        if (newParent == dropPayload->getParent())
+        {
+            ListNode *parentList = (ListNode *)newParent;
+            int oldIndex = parentList->indexOfChild(dropPayload);
+
+            if (newIndex == oldIndex)
+            {
+                return false;
+            }
+
+            if (newIndex == oldIndex + 1)
+            {
+                return false;
+            }
         }
 
         return true;
@@ -87,7 +134,7 @@ namespace UI
         }
         const ImVec2 end = ImVec2{start.x + ImGui::GetWindowSize().x - offset - first_offset, start.y + 1};
 
-        if (!sceneTreeAllowDrop(newParent))
+        if (!sceneTreeAllowDrop(newParent, index))
         {
             return;
         }
@@ -151,20 +198,29 @@ namespace UI
         sceneTreeNodeContextMenu(node);
         ImGui::PopID();
 
-        if (ImGui::IsItemClicked())
-        {
-            app->selectNode(node);
-        }
-
-        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+        if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
             // even if holding down control, we dont want to select multiple
             app->deselectNode();
-            app->selectNode(node);
-            printf("hello world\n");
+            if (node->isLeaf())
+            {
+                app->selectNode(node);
+                UI::bEditorOpen = true;
+            }
+        }
+        else if (ImGui::IsItemClicked())
+        {
+            if (selected)
+            {
+                app->deselectNode(node);
+            }
+            else
+            {
+                app->selectNode(node);
+            }
         }
 
-        if (!node->isLeaf() && sceneTreeAllowDrop(node))
+        if (!node->isLeaf() && sceneTreeAllowDrop(node, ((ListNode *)node)->getChildCount()))
         {
             if (ImGui::BeginDragDropTarget())
             {
@@ -192,15 +248,15 @@ namespace UI
             if (!node->isLeaf())
             {
                 ListNode *list = (ListNode *)node;
-                int child_count = list->getChildCount();
-                for (int i = 0; i < child_count; i++)
+                int childCount = list->getChildCount();
+                for (int i = 0; i < childCount; i++)
                 {
                     ImGui::Dummy(ImVec2{2.0f, 1.0f});
                     sceneTreeCustomTarget((ListNode *)node, i, i == 0, false);
                     sceneTreeNode(list->getChild(i));
                 }
                 ImGui::Dummy(ImVec2{2.0f, 2.0f});
-                sceneTreeCustomTarget((ListNode *)node, child_count, false, true);
+                sceneTreeCustomTarget((ListNode *)node, childCount, false, true);
             }
             ImGui::TreePop();
         }
@@ -212,7 +268,17 @@ namespace UI
         {
             first_offset = 0.0f;
 
-            sceneTreeNode(app->getSceneRoot());
+            ListNode *root = app->getSceneRoot();
+            int childCount = root->getChildCount();
+            for (int i = 0; i < childCount; i++)
+            {
+                ImGui::Dummy(ImVec2{2.0f, 1.0f});
+                sceneTreeCustomTarget((ListNode *)root, i, i == 0, false);
+
+                sceneTreeNode(root->getChild(i));
+            }
+            ImGui::Dummy(ImVec2{2.0f, 2.0f});
+            sceneTreeCustomTarget((ListNode *)root, childCount, false, true);
 
             ImGui::End();
         }

@@ -2,6 +2,7 @@
 
 #include <nlohmann/json.hpp>
 #include <string>
+#include <imgui.h>
 
 #define CONSTRUCT_NODE(type, data)                  \
     if (!strcmp(type, NODE_TYPE_ROTATE))            \
@@ -34,6 +35,11 @@
         return nullptr;                             \
     }
 
+Node *nodeFromType(const char *type)
+{
+    CONSTRUCT_NODE(type, );
+}
+
 Node *nodeFromData(const char *type, void *data)
 {
     CONSTRUCT_NODE(type, data);
@@ -55,4 +61,42 @@ Node *nodeFromJson(nlohmann::json &data)
     std::string typeName = data["type"].get<std::string>();
 
     CONSTRUCT_NODE(typeName.c_str(), data)
+}
+
+const char *nodeListUi()
+{
+    const char *result = nullptr;
+    if (ImGui::BeginMenu("Shape"))
+    {
+        if (ImGui::MenuItem("Cube"))
+        {
+            result = NODE_TYPE_CUBE;
+        }
+        if (ImGui::MenuItem("Sphere"))
+        {
+            result = nullptr;
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Transform"))
+    {
+        if (ImGui::MenuItem("Translate"))
+        {
+            result = NODE_TYPE_TRANSLATE;
+        }
+        if (ImGui::MenuItem("Rotate"))
+        {
+            result = NODE_TYPE_ROTATE;
+        }
+        if (ImGui::MenuItem("Scale"))
+        {
+            result = NODE_TYPE_SCALE;
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::MenuItem("Matrix Frame"))
+    {
+        result = NODE_TYPE_MATRIX_FRAME;
+    }
+    return result;
 }

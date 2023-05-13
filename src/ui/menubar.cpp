@@ -80,32 +80,10 @@ void UI::menubar()
         if (ImGui::BeginMenu("Scene"))
         {
             ImGui::MenuItem("Add", (const char *)NULL, (bool *)NULL, (bool)false);
-            if (ImGui::BeginMenu("Shape"))
+            const char *type = nodeListUi();
+            if (type)
             {
-
-                if (ImGui::MenuItem("Cube"))
-                {
-                }
-                if (ImGui::MenuItem("Sphere"))
-                {
-                }
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Transform"))
-            {
-                if (ImGui::MenuItem("Translate"))
-                {
-                }
-                if (ImGui::MenuItem("Rotate"))
-                {
-                }
-                if (ImGui::MenuItem("Scale"))
-                {
-                }
-                ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("Matrix Frame"))
-            {
+                app->createNode(type);
             }
 
             ImGui::Separator();

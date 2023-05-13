@@ -43,7 +43,7 @@ public:
 
     bool isLeaf() { return false; }
     bool editable() { return false; }
-    void uiEditor() {}
+    bool uiEditor() { return false; }
 
     void setData(void *data);
     void *toData(int *size);
@@ -111,7 +111,7 @@ class MatrixFrameNode : public ListNode
 protected:
     void enter();
     void exit();
-    void uiEditor() {}
+    bool uiEditor() { return false; }
     std::string getLabel()
     {
         return fmt::format("MatrixFrame[child_count={}]", (int)mChildren.size());

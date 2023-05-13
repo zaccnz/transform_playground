@@ -30,13 +30,14 @@ public:
     virtual nlohmann::json toJson() = 0;
 
     bool editable() { return true; }
-    void uiEditor();
+    bool uiEditor();
 };
 
 class CubeNode : public PrimitiveNode
 {
 private:
 public:
+    CubeNode() : PrimitiveNode(NODE_TYPE_CUBE, 1.0, 1.0, 1.0) {}
     CubeNode(float r, float g, float b) : PrimitiveNode(NODE_TYPE_CUBE, r, g, b) {}
 
     CubeNode(const CubeNode &other) : PrimitiveNode(NODE_TYPE_CUBE, other.r, other.g, other.b) {}
@@ -55,7 +56,7 @@ public:
         return fmt::format("Cube[r={:.2f},g={:.2f},b={:.2f}]", r, g, b);
     };
 
-    void uiEditor();
+    bool uiEditor();
 
     void setData(void *data);
     void *toData(int *size);

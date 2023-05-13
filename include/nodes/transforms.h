@@ -15,6 +15,7 @@ private:
     float angle, x, y, z;
 
 public:
+    RotateNode() : Node(NODE_TYPE_ROTATE), angle(0.0), x(1.0), y(0.0), z(0.0) {}
     RotateNode(float angle, float x, float y, float z) : Node(NODE_TYPE_ROTATE), angle(angle), x(x), y(y), z(z) {}
     RotateNode(const RotateNode &other) : Node(NODE_TYPE_ROTATE)
     {
@@ -40,7 +41,7 @@ public:
     }
 
     bool editable() { return true; }
-    void uiEditor();
+    bool uiEditor();
 
     void setData(void *data);
     void *toData(int *size);
@@ -54,6 +55,7 @@ private:
     float x, y, z;
 
 public:
+    ScaleNode() : Node(NODE_TYPE_SCALE), x(1.0), y(1.0), z(1.0) {}
     ScaleNode(float x, float y, float z) : Node(NODE_TYPE_SCALE), x(x), y(y), z(z) {}
     ScaleNode(const ScaleNode &other) : Node(NODE_TYPE_SCALE)
     {
@@ -78,7 +80,7 @@ public:
     }
 
     bool editable() { return true; }
-    void uiEditor();
+    bool uiEditor();
 
     void setData(void *data);
     void *toData(int *size);
@@ -92,6 +94,7 @@ private:
     float x, y, z;
 
 public:
+    TranslateNode() : Node(NODE_TYPE_TRANSLATE), x(0.0), y(0.0), z(0.0) {}
     TranslateNode(float x, float y, float z) : Node(NODE_TYPE_TRANSLATE), x(x), y(y), z(z) {}
     TranslateNode(const TranslateNode &other) : Node(NODE_TYPE_TRANSLATE)
     {
@@ -116,7 +119,7 @@ public:
     }
 
     bool editable() { return true; }
-    void uiEditor();
+    bool uiEditor();
 
     void setData(void *data);
     void *toData(int *size);

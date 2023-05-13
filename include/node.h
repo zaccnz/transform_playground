@@ -21,7 +21,7 @@ public:
     virtual std::string getLabel() = 0;
     virtual bool isLeaf() { return true; }
     virtual bool editable() = 0;
-    virtual void uiEditor() = 0;
+    virtual bool uiEditor() = 0; // return true if changed
     virtual void setData(void *data) = 0;
     virtual void *toData(int *size) = 0;
     virtual void setJson(nlohmann::json &json) = 0;
@@ -73,5 +73,6 @@ public:
 };
 
 // nodes/nodes.cpp
+Node *nodeFromType(const char *type);
 Node *nodeFromData(const char *type, void *data);
 Node *nodeFromJson(nlohmann::json &data);

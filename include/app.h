@@ -49,6 +49,10 @@ public:
     void selectNode(Node *node);
     void deselectNode(Node *node = nullptr);
     bool isNodeSelected(Node *node);
+    int getSelectedNodeCount();
+    Node *getSelectedNode(int i = 0) { return mSelectedNodes[i]; }
+
+    void createNode(const char *type);
 
     void quit() { mRunning = false; }
     Scene *getScene() { return mScene; }

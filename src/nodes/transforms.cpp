@@ -1,5 +1,6 @@
 #include <nodes/transforms.h>
 
+#include <imgui.h>
 #include <rlgl.h>
 #include <nlohmann/json.hpp>
 
@@ -10,8 +11,21 @@ void RotateNode::apply()
     rlRotatef(angle, x, y, z);
 }
 
-void RotateNode::uiEditor()
+bool RotateNode::uiEditor()
 {
+    bool changed = false;
+
+    changed |= ImGui::SliderFloat("Angle", &angle, -180.0f, 180.0f,
+                                  "%.3f", ImGuiSliderFlags_None);
+    static float pos[3] = {x, y, z};
+    if (ImGui::InputFloat3("Axis", pos, "%.2f", 0))
+    {
+        x = pos[0];
+        y = pos[1];
+        z = pos[2];
+        changed = true;
+    }
+    return changed;
 }
 
 void RotateNode::setData(void *data)
@@ -68,8 +82,17 @@ void ScaleNode::apply()
     rlScalef(x, y, z);
 }
 
-void ScaleNode::uiEditor()
+bool ScaleNode::uiEditor()
 {
+    static float pos[3] = {x, y, z};
+    if (ImGui::InputFloat3("XYZ", pos, "%.2f", 0))
+    {
+        x = pos[0];
+        y = pos[1];
+        z = pos[2];
+        return true;
+    }
+    return false;
 }
 
 void ScaleNode::setData(void *data)
@@ -122,8 +145,17 @@ void TranslateNode::apply()
     rlTranslatef(x, y, z);
 }
 
-void TranslateNode::uiEditor()
+bool TranslateNode::uiEditor()
 {
+    static float pos[3] = {x, y, z};
+    if (ImGui::InputFloat3("XYZ", pos, "%.2f", 0))
+    {
+        x = pos[0];
+        y = pos[1];
+        z = pos[2];
+        return true;
+    }
+    return false;
 }
 
 void TranslateNode::setData(void *data)
