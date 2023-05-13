@@ -1,5 +1,6 @@
 #include "app.h"
 
+#include "camera.h"
 #include "ui.h"
 
 #include <iostream>
@@ -34,12 +35,6 @@ App::App()
     UI::init();
     mScene = new Scene();
 
-    mCamera.position = (Vector3){5.0f, 5.0f, 5.0f};
-    mCamera.target = (Vector3){0.0f, 0.0f, 0.0f};
-    mCamera.up = (Vector3){0.0f, 1.0f, 0.0f};
-    mCamera.fovy = 45.0f;
-    mCamera.projection = CAMERA_PERSPECTIVE;
-
 #ifdef __EMSCRIPTEN__
     emscripten_run_script("setApplicationReady();");
 #endif
@@ -73,13 +68,7 @@ void App::render()
 
     BeginDrawing();
     ClearBackground(DARKGRAY);
-    BeginMode3D(mCamera);
     mScene->render();
-    if (mGrid)
-    {
-        DrawGrid(10, 1.0f);
-    }
-    EndMode3D();
 
     UI::render();
 
@@ -89,6 +78,8 @@ void App::render()
 bool App::update()
 {
     mScene->update();
+
+    updateCamera();
 
     bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
 
@@ -283,14 +274,6 @@ void App::openFile()
 
 void App::saveFile()
 {
-}
-
-void App::cameraPos(float *x, float *y, float *z)
-{
-    Vector3 pos = mCamera.position;
-    *x = pos.x;
-    *y = pos.y;
-    *z = pos.z;
 }
 
 void App::resetScene()

@@ -10,11 +10,37 @@
 
 namespace UI
 {
+    void sceneTreeContextMenu()
+    {
+        if (ImGui::BeginPopupContextWindow())
+        {
+            if (ImGui::BeginMenu("Create"))
+            {
+                const char *type = nodeListUi();
+                if (type)
+                {
+                    ListNode *parent = app->getSceneRoot();
+                    app->getScene()->createNode(type, nullptr, parent, parent->getChildCount());
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Paste", nullptr, nullptr, app->clipboardFull()))
+            {
+                app->paste();
+            }
+            ImGui::EndPopup();
+        }
+    }
+
     void sceneTreeNodeContextMenu(Node *node)
     {
         int selectionSize = app->getSelectedNodeCount();
         if (ImGui::BeginPopupContextItem())
         {
+            if (!app->isNodeSelected(node))
+            {
+                app->selectNode(node);
+            }
             if (ImGui::MenuItem(node->isEnabled() ? "Disable" : "Enable"))
             {
                 if (selectionSize > 1)
@@ -29,6 +55,19 @@ namespace UI
                 {
                     node->setEnabled(!node->isEnabled());
                 }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cut"))
+            {
+                app->cut();
+            }
+            if (ImGui::MenuItem("Copy"))
+            {
+                app->copy();
+            }
+            if (ImGui::MenuItem("Paste", nullptr, nullptr, app->clipboardFull()))
+            {
+                app->paste();
             }
             ImGui::Separator();
             if (node->editable() && selectionSize <= 1)
@@ -294,6 +333,7 @@ namespace UI
         if (bSceneTreeOpen && ImGui::Begin("Scene Tree", &bSceneTreeOpen))
         {
             first_offset = 0.0f;
+            sceneTreeContextMenu();
 
             ListNode *root = app->getSceneRoot();
             int childCount = root->getChildCount();

@@ -302,9 +302,16 @@ void Scene::redo(bool changePointer)
 
 void Scene::render()
 {
+    BeginMode3D(mCamera);
     rlPushMatrix();
     mSceneRoot.apply();
     rlPopMatrix();
+
+    if (*app->getGridPtr())
+    {
+        DrawGrid(10, 1.0f);
+    }
+    EndMode3D();
 }
 
 void Scene::update()

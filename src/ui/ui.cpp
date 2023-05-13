@@ -33,10 +33,15 @@ namespace UI
         rlImGuiBegin();
 
         menubar();
-        debug();
         sceneTree();
-        promptUnsavedChanges();
+        camera();
         editor();
+
+        oss();
+        about();
+
+        promptUnsavedChanges();
+        debug();
 
         rlImGuiEnd();
     }
@@ -57,8 +62,11 @@ namespace UI
                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
             float x, y, z;
-            app->cameraPos(&x, &y, &z);
-            ImGui::Text("Pos (%.1f,%.1f,%.1f)", x, y, z);
+            Camera *cam = app->getScene()->getCameraPtr();
+            x = cam->position.x;
+            y = cam->position.y;
+            z = cam->position.z;
+            ImGui::Text("Pos (%.2f,%.2f,%.2f)", x, y, z);
             ImGui::End();
             vpad += border + infoHeight;
         }

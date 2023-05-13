@@ -71,7 +71,7 @@ void UI::menubar()
             {
                 app->copy();
             }
-            if (ImGui::MenuItem("Paste", SHORTCUT_KEY "+V"))
+            if (ImGui::MenuItem("Paste", SHORTCUT_KEY "+V", nullptr, app->clipboardFull()))
             {
                 app->paste();
             }

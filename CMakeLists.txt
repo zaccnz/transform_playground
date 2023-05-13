@@ -31,14 +31,18 @@ add_subdirectory(libs/fmt EXCLUDE_FROM_ALL)
 # Executable
 set(sources
     src/app.cpp
+    src/camera.cpp
     src/main.cpp
     src/scene.cpp
     src/nodes/lists.cpp
     src/nodes/nodes.cpp
     src/nodes/primitives.cpp
     src/nodes/transforms.cpp
+    src/ui/about.cpp
+    src/ui/camera.cpp
     src/ui/editor.cpp
     src/ui/menubar.cpp
+    src/ui/oss.cpp
     src/ui/scenetree.cpp
     src/ui/ui.cpp
 )

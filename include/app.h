@@ -1,3 +1,5 @@
+#pragma once
+
 #include "node.h"
 #include "scene.h"
 
@@ -17,7 +19,6 @@ class App
 {
 private:
     bool mRunning = true;
-    Camera mCamera = {0};
     Scene *mScene = nullptr;
     Node *mSelectedNodes[MAX_SELECTED_NODES] = {nullptr};
     void **mClipboard = nullptr;
@@ -43,7 +44,6 @@ public:
     void openFile();
     void saveFile();
 
-    void cameraPos(float *x, float *y, float *z);
     void resetScene();
 
     void selectNode(Node *node);
@@ -58,6 +58,7 @@ public:
     Scene *getScene() { return mScene; }
     ListNode *getSceneRoot() { return mScene->getSceneRoot(); }
     bool *getGridPtr() { return &mGrid; }
+    bool clipboardFull() { return mClipboardCount; }
 };
 
 extern App *app;

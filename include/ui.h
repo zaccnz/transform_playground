@@ -23,7 +23,10 @@ namespace UI
     // UI elements
     void debug();                // ui.cpp
     void promptUnsavedChanges(); // ui.cpp
+    void about();                // about.cpp
+    void camera();               // camera.cpp
     void editor();               // editor.cpp
     void menubar();              // menubar.cpp
+    void oss();                  // oss.cpp
     void sceneTree();            // scenetree.cpp
 }

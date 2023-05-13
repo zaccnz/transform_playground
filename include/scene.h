@@ -112,4 +112,5 @@ public:
     bool areChangesUnsaved();
 
     ListNode *getSceneRoot() { return &mSceneRoot; }
+    Camera *getCameraPtr() { return &mCamera; }
 };
