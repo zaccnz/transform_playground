@@ -66,6 +66,8 @@ private:
     int mActionChangePointer = 0;
     bool mActionChanges = false;
     int mActionPointerSaved = 0;
+    Action mPasteFirst = {.type = ACTION_NOP};
+    Action *mPasteLast = nullptr;
 
     void tempRegisterNode(Node *node, Node *parent);
 
@@ -95,6 +97,11 @@ public:
     void deleteNode(Node *target);
     void editNode(Node *target, void *data, void *newData);
     void moveNode(Node *target, ListNode *newParent, int index);
+
+    void cutNodes(Node **nodes, int count);
+    void pasteStart();
+    void pasteAddNode(const char *type, void *data, Node *parent, int index);
+    void pasteCommit();
 
     bool canUndo();
     bool canRedo();

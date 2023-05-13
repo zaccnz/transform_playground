@@ -22,6 +22,7 @@ void Action::freeAction(Action *action)
     if (action->next)
     {
         freeAction(action->next);
+        free(action->next);
     }
 }
 
@@ -148,13 +149,20 @@ int Scene::registerChildren(ListNode *node, int *childNodeIds)
     for (int i = 0; i < childCount; i++)
     {
         Node *child = node->getChild(i);
-        mIds.insert({*childNodeIds, child});
-        mIdResolver.insert({child, *childNodeIds});
-        childNodeIds++;
+        int id = childNodeIds ? *childNodeIds : mNextId++;
+        mIds.insert({id, child});
+        mIdResolver.insert({child, id});
+        if (childNodeIds)
+        {
+            childNodeIds++;
+        }
         if (!child->isLeaf())
         {
             int count = registerChildren((ListNode *)child, childNodeIds);
-            childNodeIds += count;
+            if (childNodeIds)
+            {
+                childNodeIds += count;
+            }
             totalCount += count;
         }
     }
@@ -301,12 +309,15 @@ void Scene::render()
 
 void Scene::update()
 {
-    while (mActionChangePointer < mActionPointer)
+    if (mActionChanges)
     {
-        redo(true);
-        mActionChangePointer++;
+        while (mActionChangePointer < mActionPointer)
+        {
+            redo(true);
+            mActionChangePointer++;
+        }
+        mActionChanges = false;
     }
-    mActionChanges = false;
 }
 
 void Scene::createNode(const char *type, void *data, Node *parent, int index)
@@ -399,6 +410,105 @@ void Scene::moveNode(Node *target, ListNode *newParent, int index)
     };
 
     pushAction(moveNodeAction);
+}
+
+void Scene::cutNodes(Node **nodes, int count)
+{
+    if (count == 0)
+    {
+        return;
+    }
+
+    Action firstAction = {
+        .type = ACTION_NOP,
+    };
+    Action *lastAction = nullptr;
+    for (int i = 0; i < count; i++)
+    {
+        Node *target = nodes[i];
+        int *childNodeIds = nullptr;
+        if (!target->isLeaf())
+        {
+            std::vector<int> childNodeIdVec;
+
+            collectChildNodeIds((ListNode *)target, childNodeIdVec);
+
+            if (childNodeIdVec.size() > 0)
+            {
+                int bufferSize = childNodeIdVec.size() * sizeof(int);
+                childNodeIds = (int *)malloc(bufferSize);
+                memcpy(childNodeIds, childNodeIdVec.data(), bufferSize);
+            }
+        }
+        ListNode *parent = (ListNode *)target->getParent();
+        Action deleteNodeAction = {
+            .type = ACTION_DELETE_NODE,
+            .nodeId = mIdResolver.at(target),
+            .childNodeIds = childNodeIds,
+            .nodeType = target->getName(),
+            .data = nullptr,
+            .oldData = target->toData(nullptr),
+            .parentId = mIdResolver.at(parent),
+            .nodeIndex = parent->indexOfChild(target),
+            .newParentId = 0,
+            .newNodeIndex = 0,
+            .next = nullptr,
+        };
+
+        if (firstAction.type == ACTION_NOP)
+        {
+            firstAction = deleteNodeAction;
+            lastAction = &firstAction;
+        }
+        else
+        {
+            lastAction->next = (Action *)malloc(sizeof(Action));
+            memcpy(lastAction->next, &deleteNodeAction, sizeof(Action));
+            lastAction = lastAction->next;
+        }
+    }
+
+    pushAction(firstAction);
+}
+
+void Scene::pasteStart()
+{
+    mPasteFirst.type = ACTION_NOP;
+    mPasteLast = nullptr;
+}
+
+void Scene::pasteAddNode(const char *type, void *data, Node *parent, int index)
+{
+    Action newNodeAction = {
+        .type = ACTION_CREATE_NODE,
+        .nodeId = mNextId++,
+        .childNodeIds = nullptr,
+        .nodeType = type,
+        .data = data,
+        .oldData = nullptr,
+        .parentId = mIdResolver.at(parent),
+        .nodeIndex = index,
+        .newParentId = 0,
+        .newNodeIndex = 0,
+        .next = nullptr,
+    };
+
+    if (mPasteFirst.type == ACTION_NOP)
+    {
+        mPasteFirst = newNodeAction;
+        mPasteLast = &mPasteFirst;
+    }
+    else
+    {
+        mPasteLast->next = (Action *)malloc(sizeof(Action));
+        memcpy(mPasteLast->next, &newNodeAction, sizeof(Action));
+        mPasteLast = mPasteLast->next;
+    }
+}
+
+void Scene::pasteCommit()
+{
+    pushAction(mPasteFirst);
 }
 
 bool Scene::canUndo()

@@ -12,14 +12,26 @@ namespace UI
 {
     void sceneTreeNodeContextMenu(Node *node)
     {
+        int selectionSize = app->getSelectedNodeCount();
         if (ImGui::BeginPopupContextItem())
         {
             if (ImGui::MenuItem(node->isEnabled() ? "Disable" : "Enable"))
             {
-                node->setEnabled(!node->isEnabled());
+                if (selectionSize > 1)
+                {
+                    for (int i = 0; i < selectionSize; i++)
+                    {
+                        Node *selectedNode = app->getSelectedNode(i);
+                        selectedNode->setEnabled(!selectedNode->isEnabled());
+                    }
+                }
+                else
+                {
+                    node->setEnabled(!node->isEnabled());
+                }
             }
             ImGui::Separator();
-            if (node->editable())
+            if (node->editable() && selectionSize <= 1)
             {
                 if (ImGui::MenuItem("Edit"))
                 {
@@ -30,56 +42,71 @@ namespace UI
                 }
                 ImGui::Separator();
             }
-            if (ImGui::BeginMenu("Insert Above"))
+            if (selectionSize <= 1)
             {
-                const char *type = nodeListUi();
-                if (type)
-                {
-                    ListNode *parent = (ListNode *)node->getParent();
-                    int index = parent->indexOfChild(node);
-                    app->getScene()->createNode(type, nullptr, parent, index);
-                }
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Insert Below"))
-            {
-                const char *type = nodeListUi();
-                if (type)
-                {
-                    ListNode *parent = (ListNode *)node->getParent();
-                    int index = parent->indexOfChild(node);
-                    app->getScene()->createNode(type, nullptr, parent, index + 1);
-                }
-                ImGui::EndMenu();
-            }
-            if (!node->isLeaf())
-            {
-                if (ImGui::BeginMenu("Insert First Child"))
+                if (ImGui::BeginMenu("Insert Above"))
                 {
                     const char *type = nodeListUi();
                     if (type)
                     {
-                        ListNode *self = (ListNode *)node;
-                        app->getScene()->createNode(type, nullptr, self, 0);
+                        ListNode *parent = (ListNode *)node->getParent();
+                        int index = parent->indexOfChild(node);
+                        app->getScene()->createNode(type, nullptr, parent, index);
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Insert Last Child"))
+                if (ImGui::BeginMenu("Insert Below"))
                 {
                     const char *type = nodeListUi();
                     if (type)
                     {
-                        ListNode *self = (ListNode *)node;
-                        app->getScene()->createNode(type, nullptr, self, self->getChildCount());
+                        ListNode *parent = (ListNode *)node->getParent();
+                        int index = parent->indexOfChild(node);
+                        app->getScene()->createNode(type, nullptr, parent, index + 1);
                     }
                     ImGui::EndMenu();
                 }
+                if (!node->isLeaf())
+                {
+                    if (ImGui::BeginMenu("Insert First Child"))
+                    {
+                        const char *type = nodeListUi();
+                        if (type)
+                        {
+                            ListNode *self = (ListNode *)node;
+                            app->getScene()->createNode(type, nullptr, self, 0);
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("Insert Last Child"))
+                    {
+                        const char *type = nodeListUi();
+                        if (type)
+                        {
+                            ListNode *self = (ListNode *)node;
+                            app->getScene()->createNode(type, nullptr, self, self->getChildCount());
+                        }
+                        ImGui::EndMenu();
+                    }
+                }
+                ImGui::Separator();
             }
-
-            ImGui::Separator();
             if (ImGui::MenuItem("Delete"))
             {
-                app->getScene()->deleteNode(node);
+                if (selectionSize > 1)
+                {
+                    Node **nodes = (Node **)malloc(selectionSize * sizeof(Node *));
+                    for (int i = 0; i < selectionSize; i++)
+                    {
+                        nodes[i] = app->getSelectedNode(i);
+                    }
+                    app->getScene()->cutNodes(nodes, selectionSize);
+                    free(nodes);
+                }
+                else
+                {
+                    app->getScene()->deleteNode(node);
+                }
             }
             ImGui::EndPopup();
         }

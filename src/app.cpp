@@ -94,28 +94,34 @@ bool App::update()
 
     if (isHotkeyDown && IsKeyPressed(KEY_N))
     {
+        deselectNode();
         resetScene();
     }
     if (isHotkeyDown && IsKeyPressed(KEY_O))
     {
+        deselectNode();
         openFile();
     }
     if (isHotkeyDown && IsKeyPressed(KEY_S))
     {
+        deselectNode();
         saveFile();
     }
 
     if (isHotkeyDown && IsKeyPressed(KEY_Z))
     {
+        deselectNode();
         mScene->undo();
     }
     if (isHotkeyDown && IsKeyPressed(KEY_Y))
     {
+        deselectNode();
         mScene->redo();
     }
     if (isHotkeyDown && IsKeyPressed(KEY_X))
     {
         cut();
+        deselectNode();
     }
     if (isHotkeyDown && IsKeyPressed(KEY_C))
     {
@@ -140,11 +146,12 @@ bool App::update()
 
 void App::cut()
 {
-    if (!*mSelectedNodes)
+    copy();
+    if (!*mSelectedNodes || !mClipboardCount)
     {
         return;
     }
-    freeClipboard();
+    mScene->cutNodes(mSelectedNodes, mClipboardCount);
 }
 
 void App::copy()
@@ -154,10 +161,74 @@ void App::copy()
         return;
     }
     freeClipboard();
+    int i = 0;
+    while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+    {
+        i++;
+    }
+    mClipboard = (void **)malloc(sizeof(void *) * i);
+    mClipboardCount = i;
+
+    for (int i = 0; i < mClipboardCount; i++)
+    {
+        Node *node = mSelectedNodes[i];
+        int size;
+        void *data = node->toData(&size);
+        mClipboard[i] = malloc(sizeof(const char *) + sizeof(int) + size);
+        *(const char **)mClipboard[i] = node->getName();
+        *(int *)(((char *)mClipboard[i]) + sizeof(const char *)) = size;
+        memcpy(((char *)mClipboard[i]) + sizeof(const char *) + sizeof(int), data, size);
+        free(data);
+    }
 }
 
 void App::paste()
 {
+    if (!mClipboard || mClipboardCount == 0)
+    {
+        return;
+    }
+    mScene->pasteStart();
+    int i = 0;
+    if (!*mSelectedNodes)
+    {
+        for (int j = 0; j < mClipboardCount; j++)
+        {
+            const char *type = *(const char **)mClipboard[j];
+            int size = *(int *)(((char *)mClipboard[j]) + sizeof(const char *));
+            void *data = malloc(size);
+            memcpy(data, (((char *)mClipboard[j]) + sizeof(const char *) + sizeof(int)), size);
+            mScene->pasteAddNode(type, data, mScene->getSceneRoot(), mScene->getSceneRoot()->getChildCount() + j);
+        }
+        mScene->pasteCommit();
+        return;
+    }
+    while (mSelectedNodes[i] && i < MAX_SELECTED_NODES)
+    {
+        Node *pasteTarget = mSelectedNodes[i];
+        ListNode *parent = nullptr;
+        int index = 0;
+        if (pasteTarget->isLeaf())
+        {
+            parent = (ListNode *)pasteTarget->getParent();
+            index = parent->indexOfChild(pasteTarget) + 1;
+        }
+        else
+        {
+            parent = (ListNode *)pasteTarget;
+            index = parent->getChildCount();
+        }
+        for (int j = 0; j < mClipboardCount; j++)
+        {
+            const char *type = *(const char **)mClipboard[j];
+            int size = *(int *)(((char *)mClipboard[j]) + sizeof(const char *));
+            void *data = malloc(size);
+            memcpy(data, (((char *)mClipboard[j]) + sizeof(const char *) + sizeof(int)), size);
+            mScene->pasteAddNode(type, data, parent, index);
+        }
+        i++;
+    }
+    mScene->pasteCommit();
 }
 
 void App::promptUnsavedChanges(AfterUnsavedChanges after)
