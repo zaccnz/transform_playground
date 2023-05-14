@@ -10,6 +10,7 @@ namespace UI
     {
         if (bCameraOpen && ImGui::Begin("Camera Editor", &bCameraOpen))
         {
+            ImGui::SetWindowSize(ImVec2{350.0, 150.0}, ImGuiCond_FirstUseEver);
             Scene *scene = app->getScene();
             Camera *camera = scene->getCameraPtr();
             float pos[3] = {camera->position.x, camera->position.y, camera->position.z};

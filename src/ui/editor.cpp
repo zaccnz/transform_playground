@@ -29,6 +29,8 @@ namespace UI
     {
         if (bEditorOpen && ImGui::Begin("Node Editor", &bEditorOpen))
         {
+            ImGui::SetWindowSize(ImVec2{280.0, 175.0}, ImGuiCond_FirstUseEver);
+
             int selectedNodeCount = app->getSelectedNodeCount();
             if (selectedNodeCount == 0)
             {

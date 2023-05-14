@@ -28,6 +28,13 @@ add_subdirectory(libs/json EXCLUDE_FROM_ALL)
 include_directories(${CMAKE_SOURCE_DIR}/libs/fmt/include)
 add_subdirectory(libs/fmt EXCLUDE_FROM_ALL)
 
+# nativefiledialog-extended library
+set(nfd "")
+if (NOT EMSCRIPTEN)
+  set(nfd "nfd")
+  add_subdirectory(libs/nativefiledialog-extended EXCLUDE_FROM_ALL)
+endif()
+
 # Executable
 set(sources
     src/app.cpp
@@ -48,12 +55,14 @@ set(sources
 )
 
 add_executable(${PROJECT_NAME} ${sources} libs/rlImGui/rlImGui.cpp ${imgui_sources})
-target_link_libraries(${PROJECT_NAME} raylib nlohmann_json::nlohmann_json fmt)
+target_link_libraries(${PROJECT_NAME} raylib nlohmann_json::nlohmann_json fmt ${nfd})
 
 if (APPLE)
     target_link_libraries(${PROJECT_NAME} "-framework IOKit")
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
     target_link_libraries(${PROJECT_NAME} "-framework OpenGL")
+    target_link_libraries(${PROJECT_NAME} "-framework AppKit")
+    target_link_libraries(${PROJECT_NAME} "-framework UniformTypeIdentifiers")
 endif()
 
 if (EMSCRIPTEN)

@@ -20,6 +20,7 @@ void UI::menubar()
             {
                 app->resetScene();
             }
+#ifndef __EMSCRIPTEN__
             ImGui::Separator();
             if (ImGui::MenuItem("Load scene", SHORTCUT_KEY "+O"))
             {
@@ -36,7 +37,6 @@ void UI::menubar()
             {
                 app->saveFile();
             }
-#ifndef __EMSCRIPTEN__
             ImGui::Separator();
             if (ImGui::MenuItem("Exit"))
             {

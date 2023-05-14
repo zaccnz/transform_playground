@@ -1,28 +1,33 @@
 #include "scene.h"
 
 #include "app.h"
+#include "camera.h"
 
 #include <raylib.h>
 #include <rlgl.h>
+#include <sstream>
+#include <nlohmann/json.hpp>
 
-void Action::freeAction(Action *action)
+void (*cFree)(void *) = free;
+
+void Action::free(Action *action)
 {
     if (action->childNodeIds)
     {
-        free(action->childNodeIds);
+        cFree(action->childNodeIds);
     }
     if (action->data)
     {
-        free(action->data);
+        cFree(action->data);
     }
     if (action->oldData)
     {
-        free(action->oldData);
+        cFree(action->oldData);
     }
     if (action->next)
     {
-        freeAction(action->next);
         free(action->next);
+        cFree(action->next);
     }
 }
 
@@ -30,17 +35,18 @@ Scene::Scene()
 {
     // mSceneRoot.pushChild(new CubeNode(1.0, 1.0, 1.0));
 
-    int id = mNextId++;
-    mIds.insert({id, &mSceneRoot});
-    mIdResolver.insert({&mSceneRoot, id});
+    mSceneRoot = new ListNode();
 
-    MatrixFrameNode *frame = new MatrixFrameNode();
-    tempRegisterNode(new RotateNode(45, 1, 0, 0), frame);
-    tempRegisterNode(new TranslateNode(2, 0, 0), frame);
-    tempRegisterNode(new ScaleNode(0.5, 2, 1), &mSceneRoot);
-    tempRegisterNode(frame, &mSceneRoot);
-    tempRegisterNode(new CubeNode(1.0, 0.5, 1.0), &mSceneRoot);
-    tempRegisterNode(new CubeNode(1.0, 1.0, 1.0), frame);
+    int id = mNextId++;
+    mIds.insert({id, mSceneRoot});
+    mIdResolver.insert({mSceneRoot, id});
+
+    CubeNode *cube = new CubeNode();
+    mSceneRoot->pushChild(cube);
+
+    id = mNextId++;
+    mIds.insert({id, cube});
+    mIdResolver.insert({cube, id});
 
     mCamera.position = (Vector3){5.0f, 5.0f, 5.0f};
     mCamera.target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -49,20 +55,28 @@ Scene::Scene()
     mCamera.projection = CAMERA_PERSPECTIVE;
 }
 
+Scene::Scene(char *sceneJson)
+{
+    nlohmann::json scene = nlohmann::json::parse(sceneJson);
+
+    CameraUtil::fromJson(scene["camera"], &mCamera);
+    mSceneRoot = (ListNode *)nodeFromJson(scene["root"]);
+
+    mCamera.up = (Vector3){0.0f, 1.0f, 0.0f};
+
+    int id = mNextId++;
+    mIds.insert({id, mSceneRoot});
+    mIdResolver.insert({mSceneRoot, id});
+
+    registerChildren(mSceneRoot, nullptr);
+}
+
 Scene::~Scene()
 {
     for (int i = 0; i < mActionCount; i++)
     {
-        Action::freeAction(&mActions[i]);
+        Action::free(&mActions[i]);
     }
-}
-
-void Scene::tempRegisterNode(Node *node, Node *parent)
-{
-    int id = mNextId++;
-    mIds.insert({id, node});
-    mIdResolver.insert({node, id});
-    ((ListNode *)parent)->pushChild(node);
 }
 
 bool Scene::pushAction(Action &action)
@@ -71,7 +85,7 @@ bool Scene::pushAction(Action &action)
     {
         for (int i = mActionPointer; i < mActionCount; i++)
         {
-            Action::freeAction(&mActions[i]);
+            Action::free(&mActions[i]);
         }
     }
     if (mActionCount >= MAX_ACTIONS)
@@ -304,7 +318,7 @@ void Scene::render()
 {
     BeginMode3D(mCamera);
     rlPushMatrix();
-    mSceneRoot.apply();
+    mSceneRoot->apply();
     rlPopMatrix();
 
     if (*app->getGridPtr())
@@ -528,15 +542,15 @@ bool Scene::canRedo()
     return mActionPointer < mActionCount;
 }
 
-bool Scene::load(char *path)
+std::string Scene::save()
 {
-    return false;
-}
-
-bool Scene::save(char *path)
-{
+    nlohmann::json scene;
+    scene["camera"] = CameraUtil::toJson();
+    scene["root"] = mSceneRoot->toJson();
+    std::stringstream stream;
+    stream << std::setw(4) << scene << std::endl;
     mActionPointerSaved = mActionPointer;
-    return false;
+    return stream.str();
 }
 
 bool Scene::areChangesUnsaved()

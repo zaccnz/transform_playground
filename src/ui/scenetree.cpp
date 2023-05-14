@@ -332,6 +332,8 @@ namespace UI
     {
         if (bSceneTreeOpen && ImGui::Begin("Scene Tree", &bSceneTreeOpen))
         {
+            ImGui::SetWindowSize(ImVec2{500.0, 350.0}, ImGuiCond_FirstUseEver);
+
             first_offset = 0.0f;
             sceneTreeContextMenu();
 

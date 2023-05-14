@@ -101,6 +101,7 @@ namespace UI
             ImGui::SameLine();
             if (ImGui::Button("Continue"))
             {
+                bPromptUnsavedChanges = false;
                 app->continueUnsavedChanges();
             }
             ImGui::End();

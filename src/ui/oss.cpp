@@ -4,8 +4,8 @@
 
 struct Licence
 {
-    const char *library;
-    const char *licence;
+  const char *library;
+  const char *licence;
 };
 
 const Licence licences[]{
@@ -125,24 +125,42 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n\
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n\
 SOFTWARE.",
     },
+    {
+        .library = "nativefiledialog-extended",
+        .licence = "This software is provided 'as-is', without any express or implied\n\
+warranty.  In no event will the authors be held liable for any damages\n\
+arising from the use of this software.\n\
+\n\
+Permission is granted to anyone to use this software for any purpose,\n\
+including commercial applications, and to alter it and redistribute it\n\
+freely, subject to the following restrictions:\n\
+\n\
+1. The origin of this software must not be misrepresented; you must not\n\
+   claim that you wrote the original software. If you use this software\n\
+   in a product, an acknowledgment in the product documentation would be\n\
+   appreciated but is not required.\n\
+2. Altered source versions must be plainly marked as such, and must not be\n\
+   misrepresented as being the original software.\n\
+3. This notice may not be removed or altered from any source distribution.",
+    },
 };
 
 namespace UI
 {
-    void oss()
+  void oss()
+  {
+    if (bOssOpen && ImGui::Begin("Open Source Licences", &bOssOpen))
     {
-        if (bOssOpen && ImGui::Begin("Open Source Licences", &bOssOpen))
+      ImGui::SetWindowSize(ImVec2{600.0, 500.0}, ImGuiCond_FirstUseEver);
+      for (auto licence : licences)
+      {
+        if (ImGui::CollapsingHeader(licence.library, ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::SetWindowSize(ImVec2{600.0, 500.0}, ImGuiCond_FirstUseEver);
-            for (auto licence : licences)
-            {
-                if (ImGui::CollapsingHeader(licence.library, ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::TextWrapped("%s", licence.licence);
-                }
-            }
-
-            ImGui::End();
+          ImGui::TextWrapped("%s", licence.licence);
         }
+      }
+
+      ImGui::End();
     }
+  }
 }

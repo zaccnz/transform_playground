@@ -4,7 +4,14 @@ this is a tool intended to help me build intuition on how the opengl transformat
 
 started in 2022 semester 1 but not completed.  the original code used OpenGL immediate mode, freeglut, GLM and imgui.  however, I have decided to rewrite it using Raylib so that it can work cross platform.  
 
-built with C++, Raylib, nlohmann Json, fmt, rlImGui and Imgui.  
+### technologies
+
+- [Raylib](https://github.com/raysan5/raylib)  
+- [rlImGui](https://github.com/raylib-extras/rlImGui)  
+- [imgui](https://github.com/ocornut/imgui)  
+- [json](https://github.com/nlohmann/json)  
+- [fmt](https://github.com/fmtlib/fmt)  
+- [nativefiledialog-extended](https://github.com/btzy/nativefiledialog-extended)  
 
 ### build instructions
 

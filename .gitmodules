@@ -13,3 +13,6 @@
 [submodule "libs/fmt"]
 	path = libs/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "libs/nativefiledialog-extended"]
+	path = libs/nativefiledialog-extended
+	url = https://github.com/btzy/nativefiledialog-extended.git

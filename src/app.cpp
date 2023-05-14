@@ -8,6 +8,8 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
+#else
+#include <nfd.h>
 #endif
 
 #ifdef __APPLE__
@@ -20,12 +22,20 @@
 
 App *app = nullptr;
 
+#ifndef __EMSCRIPTEN__
+nfdfilteritem_t filterItem[1] = {{"Scene files", "json"}};
+#endif
+
 App::App()
 {
     app = this;
 
     const int screenWidth = 1280;
     const int screenHeight = 800;
+
+#ifndef __EMSCRIPTEN__
+    NFD_Init();
+#endif
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "transform playground");
@@ -46,6 +56,9 @@ App::~App()
     delete mScene;
     UI::deinit();
     CloseWindow();
+#ifndef __EMSCRIPTEN__
+    NFD_Quit();
+#endif
 }
 
 void App::freeClipboard()
@@ -79,7 +92,7 @@ bool App::update()
 {
     mScene->update();
 
-    updateCamera();
+    CameraUtil::update();
 
     bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
 
@@ -270,10 +283,40 @@ void App::continueUnsavedChanges()
 
 void App::openFile()
 {
+#ifndef __EMSCRIPTEN__
+    nfdchar_t *outPath;
+    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
+    if (result == NFD_OKAY)
+    {
+        delete mScene;
+        char *content = LoadFileText(outPath);
+        mScene = new Scene(content);
+        free(content);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        printf("Error opening file: %s\n", NFD_GetError());
+    }
+#endif
 }
 
 void App::saveFile()
 {
+#ifndef __EMSCRIPTEN__
+    nfdchar_t *outPath;
+    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, "scene.json");
+    if (result == NFD_OKAY)
+    {
+        std::string content = mScene->save();
+        SaveFileText(outPath, (char *)content.c_str());
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        printf("Error saving file: %s\n", NFD_GetError());
+    }
+#endif
 }
 
 void App::resetScene()
