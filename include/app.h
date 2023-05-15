@@ -25,6 +25,7 @@ private:
     int mClipboardCount = 0;
     AfterUnsavedChanges mAfterUnsavedChanges;
     bool mGrid = true;
+    bool mHotkeyDown = false;
 
     void freeClipboard();
 
@@ -59,6 +60,7 @@ public:
     ListNode *getSceneRoot() { return mScene->getSceneRoot(); }
     bool *getGridPtr() { return &mGrid; }
     bool clipboardFull() { return mClipboardCount; }
+    void setHotkey(bool down) { mHotkeyDown = down; }
 };
 
 extern App *app;

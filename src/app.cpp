@@ -90,62 +90,95 @@ void App::render()
 
 bool App::update()
 {
+    mRunning &= !WindowShouldClose();
     mScene->update();
 
     CameraUtil::update();
 
-    bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
+#ifndef __EMSCRIPTEN__
+    // a bit janky, but emscripten doesn't send key events for control, alt, or command
+    // instead, the HTML page listens for these events and updates the booleans.  i mimick
+    // this here for desktop.
+    if (IsKeyPressed(HOTKEY_LEFT) || IsKeyReleased(HOTKEY_RIGHT))
+    {
+        mHotkeyDown = true;
+        CameraUtil::bControlHeld = true;
+    }
+    else if (IsKeyReleased(HOTKEY_LEFT) || IsKeyReleased(HOTKEY_RIGHT))
+    {
+        mHotkeyDown = false;
+        CameraUtil::bControlHeld = false;
+    }
+    if (IsKeyPressed(KEY_LEFT_ALT) || IsKeyPressed(KEY_RIGHT_ALT))
+    {
+        CameraUtil::bAltHeld = true;
+    }
+    else if (IsKeyReleased(KEY_LEFT_ALT) || IsKeyReleased(KEY_RIGHT_ALT))
+    {
+        CameraUtil::bAltHeld = false;
+    }
+#ifdef __APPLE__
+    if (IsKeyPressed(KEY_LEFT_CONTROL) || IsKeyPressed(KEY_RIGHT_CONTROL))
+    {
+        CameraUtil::bControlHeld = true;
+    }
+    else if (IsKeyReleased(KEY_LEFT_CONTROL) || IsKeyReleased(KEY_RIGHT_CONTROL))
+    {
+        CameraUtil::bControlHeld = false;
+    }
+#endif // __APPLE__
+#endif // __EMSCRIPTEN__
 
-    if (isHotkeyDown && IsKeyPressed(KEY_N))
+    if (mHotkeyDown && IsKeyPressed(KEY_N))
     {
         deselectNode();
         resetScene();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_O))
+    if (mHotkeyDown && IsKeyPressed(KEY_O))
     {
         deselectNode();
         openFile();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_S))
+    if (mHotkeyDown && IsKeyPressed(KEY_S))
     {
         deselectNode();
         saveFile();
     }
 
-    if (isHotkeyDown && IsKeyPressed(KEY_Z))
+    if (mHotkeyDown && IsKeyPressed(KEY_Z))
     {
         deselectNode();
         mScene->undo();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_Y))
+    if (mHotkeyDown && IsKeyPressed(KEY_Y))
     {
         deselectNode();
         mScene->redo();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_X))
+    if (mHotkeyDown && IsKeyPressed(KEY_X))
     {
         cut();
         deselectNode();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_C))
+    if (mHotkeyDown && IsKeyPressed(KEY_C))
     {
         copy();
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_V))
+    if (mHotkeyDown && IsKeyPressed(KEY_V))
     {
         paste();
     }
 
-    if (isHotkeyDown && IsKeyPressed(KEY_ONE))
+    if (mHotkeyDown && IsKeyPressed(KEY_ONE))
     {
         UI::bSceneTreeOpen = true;
     }
-    if (isHotkeyDown && IsKeyPressed(KEY_TWO))
+    if (mHotkeyDown && IsKeyPressed(KEY_TWO))
     {
         UI::bCameraOpen = true;
     }
 
-    return !WindowShouldClose() && mRunning;
+    return mRunning;
 }
 
 void App::cut()
@@ -327,9 +360,7 @@ void App::resetScene()
 
 void App::selectNode(Node *node)
 {
-    bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
-
-    if (isHotkeyDown)
+    if (mHotkeyDown)
     {
         int i = 0;
         while (mSelectedNodes[i] && i < MAX_SELECTED_NODES - 1)
@@ -356,8 +387,7 @@ void App::deselectNode(Node *node)
     {
         // if we are not holding control or command, we want to change the
         // selection to be this node (unless we are already selecting it).  otherwise, deselect it
-        bool isHotkeyDown = IsKeyDown(HOTKEY_LEFT) || IsKeyDown(HOTKEY_RIGHT);
-        if (!isHotkeyDown)
+        if (!mHotkeyDown)
         {
             if (mSelectedNodes[0] == node)
             {
@@ -445,7 +475,46 @@ extern "C"
     void resize_event(int width, int height)
     {
         SetWindowSize(width, height);
-        printf("resized window to %d %d\n", width, height);
+    }
+
+    void hotkey_down(int hotkey)
+    {
+        if (hotkey == 0)
+        {
+            // control
+            app->setHotkey(true);
+            CameraUtil::bControlHeld = true;
+        }
+        else if (hotkey == 1)
+        {
+            // alt
+            CameraUtil::bAltHeld = true;
+        }
+        else if (hotkey == 2)
+        {
+            // super (command on macOS)
+            app->setHotkey(true);
+        }
+    }
+
+    void hotkey_up(int hotkey)
+    {
+        if (hotkey == 0)
+        {
+            // control
+            app->setHotkey(false);
+            CameraUtil::bControlHeld = false;
+        }
+        else if (hotkey == 1)
+        {
+            // alt
+            CameraUtil::bAltHeld = false;
+        }
+        else if (hotkey == 2)
+        {
+            // super (command on macOS)
+            app->setHotkey(false);
+        }
     }
 }
 #endif

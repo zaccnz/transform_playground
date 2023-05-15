@@ -66,9 +66,8 @@ if (APPLE)
 endif()
 
 if (EMSCRIPTEN)
-  #TODO: use my own template HTML here
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -O3")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='[\"_resize_event\", \"_main\"]' -sEXPORTED_RUNTIME_METHODS=ccall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='[\"_resize_event\", \"_hotkey_down\", \"_hotkey_up\", \"_main\"]' -sEXPORTED_RUNTIME_METHODS=ccall")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASYNCIFY_IMPORTS=['emscripten_asm_const_int']")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/src/wasm_template.html")
   set(CMAKE_EXECUTABLE_SUFFIX ".html")

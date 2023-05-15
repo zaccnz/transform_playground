@@ -7,6 +7,11 @@
 
 namespace CameraUtil
 {
+    bool bControlHeld = false;
+    bool bAltHeld = false;
+    bool bHasCursor = false;
+    Vector2 vLastPosition = {0.0};
+
     void jsonWriteVector3(nlohmann::json &json, Vector3 data)
     {
         json[0] = data.x;
@@ -70,9 +75,12 @@ namespace CameraUtil
 
     void update()
     {
+        Camera *camera = app->getScene()->getCameraPtr();
 
         Vector3 movement = {0.0};
         Vector3 rotation = {0.0};
+        float zoom = 0.0;
+
         if (IsKeyDown(KEY_W))
         {
             movement.x = 0.1;
@@ -98,47 +106,47 @@ namespace CameraUtil
             movement.z += 0.1;
         }
 
-        Vector2 mouseDelta = GetMouseDelta();
-        if (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))
+        if (bAltHeld != bHasCursor)
         {
-            rotation.x = mouseDelta.x;
-            rotation.y = mouseDelta.y;
+            bHasCursor ? EnableCursor() : DisableCursor();
+            bHasCursor = !bHasCursor;
         }
 
-        if (IsKeyPressed(KEY_LEFT_ALT) || IsKeyPressed(KEY_RIGHT_ALT))
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || bAltHeld)
         {
-            DisableCursor();
-        }
-        if (IsKeyReleased(KEY_LEFT_ALT) || IsKeyReleased(KEY_RIGHT_ALT))
-        {
-            EnableCursor();
-        }
+            zoom = -GetMouseWheelMove();
 
-        int mouseWheel = GetMouseWheelMove();
-
-        Camera *camera = app->getScene()->getCameraPtr();
-        UpdateCameraPro(camera, movement, rotation, -mouseWheel);
-
-        if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL))
-        {
-            Vector3 focus = Vector3Subtract(camera->position, camera->target);
-            Vector3 right = Vector3CrossProduct(Vector3Subtract(camera->position, camera->target),
-                                                Vector3Subtract(camera->up, camera->position));
-
-            float yaw = -mouseDelta.x * 0.05;
-            float pitch = mouseDelta.y * 0.05;
-
-            Matrix rotMatYaw = MatrixRotate(camera->up, yaw);
-            Matrix rotMatPitch = MatrixRotate(right, pitch);
-            Vector3 newFocus = Vector3Transform(focus, rotMatYaw);
-            newFocus = Vector3Transform(newFocus, rotMatPitch);
-            if (newFocus.x < 1.0 && newFocus.x > -1.0 && newFocus.z < 1.0 && newFocus.z > -1.0)
+            Vector2 mousePos = GetMousePosition();
+            Vector2 mouseDelta = Vector2Subtract(mousePos, vLastPosition);
+            vLastPosition = mousePos;
+            if (bAltHeld)
             {
-                newFocus.x = newFocus.x < 0.0 ? -1.0 : 1.0;
-                newFocus.z = newFocus.z < 0.0 ? -1.0 : 1.0;
-                return;
+                rotation.x = mouseDelta.x;
+                rotation.y = mouseDelta.y;
             }
-            camera->position = Vector3Add(camera->target, newFocus);
+            else if (bControlHeld)
+            {
+                Vector3 focus = Vector3Subtract(camera->position, camera->target);
+                Vector3 right = Vector3CrossProduct(Vector3Subtract(camera->position, camera->target),
+                                                    Vector3Subtract(camera->up, camera->position));
+
+                float yaw = -mouseDelta.x * 0.05;
+                float pitch = mouseDelta.y * 0.05;
+
+                Matrix rotMatYaw = MatrixRotate(camera->up, yaw);
+                Matrix rotMatPitch = MatrixRotate(right, pitch);
+                Vector3 newFocus = Vector3Transform(focus, rotMatYaw);
+                newFocus = Vector3Transform(newFocus, rotMatPitch);
+                if (newFocus.x < 1.0 && newFocus.x > -1.0 && newFocus.z < 1.0 && newFocus.z > -1.0)
+                {
+                    newFocus.x = newFocus.x < 0.0 ? -1.0 : 1.0;
+                    newFocus.z = newFocus.z < 0.0 ? -1.0 : 1.0;
+                    return;
+                }
+                camera->position = Vector3Add(camera->target, newFocus);
+            }
         }
+
+        UpdateCameraPro(camera, movement, rotation, zoom);
     }
 }
